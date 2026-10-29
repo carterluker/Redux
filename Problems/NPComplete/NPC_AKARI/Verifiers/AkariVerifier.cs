@@ -14,7 +14,7 @@ class AkariVerifier : IVerifier<AKARI> {
     public string source { get; } = "TODO";
     public string sourceFile { get; } = SourceFile.Path();
     public string sourceLink { get; } = "TODO";
-    public string[] contributors { get; } = { "Danny Fawson" };
+    public string[] contributors { get; } = { "Claude Opus 5.5" };
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? complexity { get; set; } = null;
     private string _certificate = "";

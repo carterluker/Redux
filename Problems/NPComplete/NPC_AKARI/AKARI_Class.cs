@@ -34,7 +34,7 @@ class AKARI : IProblem<AkariSolver, AkariVerifier, DummyVisualization> {
     public AkariSolver defaultSolver { get; } = new AkariSolver();
     public AkariVerifier defaultVerifier { get; } = new AkariVerifier();
     public DummyVisualization defaultVisualization { get; } = new DummyVisualization();
-    public string[] contributors { get; } = { "Danny Fawson" };
+    public string[] contributors { get; } = { "Claude Opus 5.5" };
     // Declared, not derived. Deciding whether an Akari (Light Up) puzzle has a solution
     // is NP-complete (McPhail, 2005).
     public ComplexityClass complexityClass { get; } = ComplexityClass.NPComplete;

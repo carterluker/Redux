@@ -421,6 +421,15 @@
     "reduxStats": { "prsMerged": 0, "reviews": 0 },
     "reduxGuiStats": { "prsMerged": 0, "reviews": 0 }
   },
+  "Claude Opus 5.5": {
+    "email": "",
+    "education": "",
+    "major": "",
+    "bio": "Anthropic LLM (model ID claude-opus-5-5). Implemented the Akari problem class.",
+    "githubUsername": "",
+    "reduxStats": { "prsMerged": 0, "reviews": 0 },
+    "reduxGuiStats": { "prsMerged": 0, "reviews": 0 }
+  },
   "Beau Williams": {
     "email": "",
     "education": "",

@@ -9,7 +9,7 @@ class AkariSolver : ISolver<AKARI> {
     public string solverDefinition { get; } = "TODO";
     public string source { get; } = "TODO";
     public string sourceFile { get; } = SourceFile.Path();
-    public string[] contributors { get; } = { "Danny Fawson" };
+    public string[] contributors { get; } = { "Claude Opus 5.5" };
     // Declared, not derived: read the algorithm below and decide; don't guess from the
     // solver's name. Getting these wrong is a public correctness claim the API serves to callers.
     // TODO: replace Unclassified. A test in redux-tests/Metadata fails until you do, on purpose. See Interfaces/SolverType.cs for what each value means.
