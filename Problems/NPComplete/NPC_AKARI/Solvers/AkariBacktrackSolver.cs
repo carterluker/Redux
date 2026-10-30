@@ -26,9 +26,36 @@ class AkariBacktrackSolver : ISolver<AKARI> {
     public AkariBacktrackSolver() { }
 
     public string solve(AKARI problem) {
-        // TODO: implement Akari Solver for AKARI
-
         // To get parsed problem instance, use the problem.grid property.
+
+        // Problem property copies
+        int[][] grid = problem.grid;
+        const int EMPTY_CELL = AKARI.EMPTY_CELL;
+        const int WALL = AKARI.WALL;
+
+        // Set of grid coordinates for each grid element type.
+        HashSet<(int, int)> emptyCells = new(); 
+        HashSet<(int, int)> unhintedWalls = new();
+        HashSet<(int, int)> hintedWalls = new();
+
+        // Build grid element sets
+        for (int i = 0; i < grid.GetLength(0); i++) {
+            for (int j = 0; j < grid.GetLength(1); j++) {
+                switch (grid[i][j]) {
+                    case EMPTY_CELL:
+                        emptyCells.Add((i, j));
+                        break;
+                    case WALL:
+                        unhintedWalls.Add((i, j));
+                        break;
+                    case 0 or 1 or 2 or 3 or 4:
+                        hintedWalls.Add((i, j));
+                        break;
+                }
+            }
+        }
+
+        
 
         // make sure to check timerHasExpired occasionally, and return if it has
         if (timerHasExpired)
