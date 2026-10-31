@@ -2,16 +2,6 @@ using API.Interfaces;
 
 namespace API.Problems.NPComplete.NPC_AKARI.Solvers;
 
-// C# port of the backtracking ("track") solver by Bram Pulles:
-//   Paper: https://www.cs.ru.nl/bachelors-theses/2021/Bram_Pulles___1015194___Analysis_of_Akari.pdf
-//   Repo:  https://github.com/Borroot/akari (src/tracksolver.py)
-// Method names mirror the Python functions so the two can be compared side by side.
-// Intentional deviations from the Python:
-//   1. In Backtrack, the bulb is added to the solution BEFORE PlaceBulb (as the Python trivial
-//      solver already does), so a just-saturated clue wall prunes its other neighbours immediately.
-//      This finds the same first solution while exploring fewer nodes.
-//   2. TrivialSolve iterates over a snapshot of the wall list instead of mutating it mid-iteration.
-//   3. Only the first solution is searched for; the solution count cap and difficulty stats are dropped.
 class AkariBacktrackSolver : ISolver<AKARI> {
 
     // --- Fields ---
@@ -32,10 +22,21 @@ class AkariBacktrackSolver : ISolver<AKARI> {
     // public string complexity {get;} = "TODO";
     public bool timerHasExpired { get; set; }
 
+    // C# port of the backtracking ("track") solver by Bram Pulles:
+    //   Paper: https://www.cs.ru.nl/bachelors-theses/2021/Bram_Pulles___1015194___Analysis_of_Akari.pdf
+    //   Repo:  https://github.com/Borroot/akari (src/tracksolver.py)
+    // Naming conventions mirror the original so the two can be compared.
+    // Deviations from the original:
+    //   1. In Backtrack, the bulb is added to the solution BEFORE PlaceBulb (as the Python trivial
+    //      solver already does), so a just-saturated clue wall prunes its other neighbours immediately.
+    //      This finds the same first solution while exploring fewer nodes.
+    //   2. TrivialSolve iterates over a snapshot of the wall list instead of mutating it mid-iteration.
+    //   3. Only the first solution is searched for; the solution count cap and difficulty stats are dropped.
+
     // Left, up, right, down (same order as DIRS in the Python constants.py).
     private static readonly (int dr, int dc)[] DIRS = { (0, -1), (-1, 0), (0, 1), (1, 0) };
 
-    // Per-solve state, reset at the start of solve().
+    // Per-solve state, gets reset at the start of solve().
     private int[][] grid = Array.Empty<int[]>();
     private int rows, cols;
     private List<(int r, int c)> clueWalls = new();    // walls with clue 1-4, row-major
