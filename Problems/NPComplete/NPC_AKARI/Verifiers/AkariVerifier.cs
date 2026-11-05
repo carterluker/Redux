@@ -11,7 +11,7 @@ class AkariVerifier : IVerifier<AKARI> {
     public string source { get; } = " ";
     public string sourceLink { get; } = "TODO";
     public string sourceFile { get; } = SourceFile.Path();
-    public string[] contributors { get; } = { "Danny Fawson" };
+    public string[] contributors { get; } = { "Danny Fawson", "Carter Luker" };
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? complexity { get; set; } = null;
     private string _certificate = "";
@@ -108,7 +108,6 @@ class AkariVerifier : IVerifier<AKARI> {
                     throw new CertificateParseException(problem, certificate, $"unexpected end of certificate inside row {y + 1} at {Location()}");
                 }
                 char c = certificate[pos];
-                if (c == '*') {lights.Add((x, y));}
                 int cell = c switch {
                     '*' => EMPTY_CELL,
                     '_' => EMPTY_CELL,
@@ -116,10 +115,11 @@ class AkariVerifier : IVerifier<AKARI> {
                     >= '0' and <= '4' => c - '0',
                     _ => throw new CertificateParseException(problem, certificate, $"invalid cell character '{c}' at row {y + 1}, cell {x + 1} ({Location()}); allowed: _, *, #, 0-4")
                 };
-                if (cell >= 0 && cell <= 4) {hints.add((x, y, cell));}
                 if (cell != grid[y][x]) {
                     throw new CertificateParseException(problem, certificate, $"problem-certificate mismatch at row {y + 1}, cell {x + 1} ({Location()})");
                 }
+                if (c == '*') {lights.Add((x, y));}
+                if (cell >= 0 && cell <= 4) {hints.add((x, y, cell));}
                 pos++;
                 x++;
                 if (TryConsume(',')) { continue; }
