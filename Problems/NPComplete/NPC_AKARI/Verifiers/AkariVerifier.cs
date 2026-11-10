@@ -1,9 +1,13 @@
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Text.Json.Serialization;
 using API.Interfaces;
 
 namespace API.Problems.NPComplete.NPC_AKARI.Verifiers;
 
 class AkariVerifier : IVerifier<AKARI> {
+    public const string CertificateGrammar = "{{(x,y)} | x,y are integer coordinates of lights}";
+    public const string CertificateExample = "{(0,1),(2,4),(3,1)}";
 
     // --- Fields ---
     public string verifierName { get; } = "Akari (Light-Up) Puzzle Solution Verifier";
@@ -33,30 +37,31 @@ class AkariVerifier : IVerifier<AKARI> {
     }
 
     public bool verify(AKARI problem, string certificate) {
-        public const string CertificateGrammar = "{(K1, K2...Kn) | K1-Kn are equal-size char lists ('_' is an open space, '#' is a wall, '*' is a bulb, '0'-'4' is a hint)}";
-        public const string CertificateExample = "((_,*,_,_,_),(_,3,*,2,*),(_,*,_,_,_),(*,_,_,1,_),(1,_,_,*,_))";
-
 
         // TODO: implement Akari Verifier for AKARI
         int[][] problemGrid = (int[][])problem.grid.Clone();
         try {
-            var objects = ParseCertificate(certificate);
+            var lights = ParseCertificate(certificate);
         } catch {
             return false;
         }
 
-        foreach(var light in objects.lights) {
+        foreach(var light in lights) {
             if (!CheckLight(grid, light.x, light.y)) {return false;}
         }
 
-        foreach(var hint in objects.hints) {
-            if (!CheckHint(grid, hint.x, hint.y, hint.value)) {return false;}
+        for(int y = 0; y < grid.Length; y++) {
+            for(int x = 0; x < grid[0].Length; x++) {
+                if (grid[y][x] >= 0) {
+                    if (!CheckHint(grid, x, y)) {return false;}
+                }
+            }
         }
 
         return true;
     }
 
-    private static (List<(int x, int y)> lights, List<(int x, int y, int value)> hints) ParseCertificate(int[][] grid, string certificate) {
+    private static List<(int x, int y)> ParseCertificate(int[][] grid, string certificate) {
         if (string.IsNullOrWhiteSpace(certificate)) {
                throw new CertificateParseException(problem, certificate, "certificate is empty");
            }
@@ -64,28 +69,18 @@ class AkariVerifier : IVerifier<AKARI> {
         // The certificate is scanned as written (whitespace skipped between tokens) so that
         // reported positions match what the caller sees, including multi-line instances.
         int pos = 0;
-        int x = 0;
-        int y = 0;
+        int x;
+        int y;
 
         void SkipWhitespace() {
             while (pos < certificate.Length && char.IsWhiteSpace(certificate[pos])) { pos++; }
-        }
-
-        // 1-based line and column of the current position in the original certificate.
-        string Location() {
-            int line = 1;
-            int lineStart = 0;
-            for (int i = 0; i < pos && i < certificate.Length; i++) {
-                if (certificate[i] == '\n') { line++; lineStart = i + 1; }
-            }
-            return $"line {line}, column {pos - lineStart + 1}";
         }
 
         void Expect(char c) {
             SkipWhitespace();
             if (pos >= certificate.Length || certificate[pos] != c) {
                 string found = pos >= certificate.Length ? "end of certificate" : $"'{certificate[pos]}'";
-                throw new CertificateParseException(problem, certificate, $"expected '{c}' but found {found} at {Location()}");
+                throw new CertificateParseException(problem, certificate, $"expected '{c}' but found {found}");
             }
             pos++;
         }
@@ -96,52 +91,37 @@ class AkariVerifier : IVerifier<AKARI> {
             return false;
         }
 
-        var lights = new List<(int x, int y)>();
-        var hints = new List<(int x, int y, int value)>();
-        Expect('(');
-        while (true) {
-            x = 0;
-            Expect('(');
-            while (true) {
-                SkipWhitespace();
-                if (pos >= certificate.Length) {
-                    throw new CertificateParseException(problem, certificate, $"unexpected end of certificate inside row {y + 1} at {Location()}");
-                }
-                char c = certificate[pos];
-                int cell = c switch {
-                    '*' => EMPTY_CELL,
-                    '_' => EMPTY_CELL,
-                    '#' => WALL,
-                    >= '0' and <= '4' => c - '0',
-                    _ => throw new CertificateParseException(problem, certificate, $"invalid cell character '{c}' at row {y + 1}, cell {x + 1} ({Location()}); allowed: _, *, #, 0-4")
-                };
-                if (cell != grid[y][x]) {
-                    throw new CertificateParseException(problem, certificate, $"problem-certificate mismatch at row {y + 1}, cell {x + 1} ({Location()})");
-                }
-                if (c == '*') {lights.Add((x, y));}
-                if (cell >= 0 && cell <= 4) {hints.add((x, y, cell));}
+        int GetNumber() {
+            var numberBuilder = new StringBuilder();
+            SkipWhitespace();
+            while(Char.IsDigit(certificate, pos))
+            {
+                numberBuilder.Append(certificate[pos]);
                 pos++;
-                x++;
-                if (TryConsume(',')) { continue; }
-                break;
             }
+            string numberString = numberBuilder.ToString();
+            if (numberString.Length == 0) {throw new CertificateParseException(problem, certificate, "No number provided");}
+            return Int32.Parse(numberString);
+        }
+
+        var lights = new List<(int x, int y)>();
+        Expect('{');
+        while (true) {
+            Expect('(');
+            x = GetNumber();
+            Expect(',');
+            y = GetNumber();
             Expect(')');
-            if ((x + 1) != grid[0].Length) {
-                throw new CertificateParseException(problem, input, $"mismatch: certificate has {x + 1} cells in row {y + 1}, solution has {grid[0].Length}");
-            }
-            y++;
-            if (TryConsume(',')) { continue; }
+            lights.Add((x,y));
+            if(TryConsume(',')) { continue; }
             break;
         }
-        if ((y + 1) != grid.Length) {
-                throw new CertificateParseException(problem, input, $"mismatch: certificate has {y + 1} rows, solution has {grid.Length}");
-        }
-        Expect(')');
+        Expect('}');
         SkipWhitespace();
         if (pos != certificate.Length) {
-            throw new CertificateParseException(problem, certificate, $"unexpected trailing characters at {Location()}");
+            throw new CertificateParseException(problem, certificate, $"unexpected trailing characters");
         }
-        return (lights, hints);
+        return lights;
     }
 
     private static bool CheckLight(int[][] grid, int x, int y) {
@@ -171,7 +151,8 @@ class AkariVerifier : IVerifier<AKARI> {
         }
     }
 
-    private static bool CheckHint(int[][] grid, int x, int y, int value) {
+    private static bool CheckHint(int[][] grid, int x, int y) {
+        int value = grid[y][x];
         int count = 0;
 
         if (x > 0) {count += grid[y][x - 1] == LIGHT ? 1 : 0;}
