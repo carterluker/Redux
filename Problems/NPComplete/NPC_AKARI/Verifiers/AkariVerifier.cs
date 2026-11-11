@@ -38,7 +38,6 @@ class AkariVerifier : IVerifier<AKARI> {
 
     public bool verify(AKARI problem, string certificate) {
 
-        // TODO: implement Akari Verifier for AKARI
         int[][] problemGrid = (int[][])problem.grid.Clone();
         try {
             var lights = ParseCertificate(certificate);
@@ -47,13 +46,14 @@ class AkariVerifier : IVerifier<AKARI> {
         }
 
         foreach(var light in lights) {
-            if (!CheckLight(grid, light.x, light.y)) {return false;}
+            if (!CheckLight(problemGrid, light.x, light.y)) {return false;}
         }
 
-        for(int y = 0; y < grid.Length; y++) {
-            for(int x = 0; x < grid[0].Length; x++) {
-                if (grid[y][x] >= 0) {
-                    if (!CheckHint(grid, x, y)) {return false;}
+        for(int y = 0; y < problemGrid.Length; y++) {
+            for(int x = 0; x < problemGrid[0].Length; x++) {
+                if (problemGrid[y][x] == EMPTY_CELL) {return false;}
+                if (problemGrid[y][x] >= 0) {
+                    if (!CheckHint(problemGrid, x, y)) {return false;}
                 }
             }
         }
