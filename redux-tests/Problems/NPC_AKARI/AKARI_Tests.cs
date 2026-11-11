@@ -1,6 +1,7 @@
 using Xunit;
 using API.Interfaces;
 using API.Problems.NPComplete.NPC_AKARI;
+using API.Problems.NPComplete.NPC_AKARI.Verifiers;
 
 namespace redux_tests;
 #pragma warning disable CS1591
@@ -256,6 +257,47 @@ public class AKARI_Tests {
     public void AKARI_Parser_AcceptsTrailingWhitespace() {
         var problem = new AKARI("((_))  \n\t ");
         Assert.Equal(new[] { new[] { E } }, problem.grid);
+    }
+
+    #endregion
+
+    #region Verifier
+
+    [Theory]
+    [InlineData("((_,_,_),(_,_,_),(_,_,_))", "{(0,0),(1,1),(2,2)}")]
+    [InlineData("((_,_,_),(_,0,_),(_,_,_))", "{(0,0),(2,2)}")]
+    [InlineData("((1,_,_),(_,_,_),(_,_,_))", "{(1,0),(0,2),(2,1)}")]
+    [InlineData("((_,_,_),(_,2,_),(_,_,_))", "{(0,1),(1,0),(2,2)}")]
+    [InlineData("((_,3,_),(_,_,_),(_,_,_))", "{(0,0),(2,0),(1,1)}")]
+    [InlineData("((_,_,_),(_,4,_),(_,_,_))", "{(1,0),(0,1),(2,1),(1,2)}")]
+    [InlineData("((#,_,#),(1,_,1),(#,_,#))", "{(1,1)}")]
+    public void AKARI_Verifier_AcceptsValidCertificate(string instance, string certificate) {
+        AKARI problem = new AKARI(instance);
+        AkariVerifier verifier = new AkariVerifier();
+        Assert.True(verifier.verify(problem, certificate));
+    }
+
+    [Theory]
+    [InlineData("((_,_,_),(_,_,_),(_,_,_))", "{(0,0)}")]
+    [InlineData("((_,_,_),(_,_,_),(_,_,_))", "{(0,0),(1,1),(2,2),(0,2)}")]
+    [InlineData("((_,0,_),(_,_,_),(_,_,_))", "{(0,0),(1,1),(2,2)}")]
+    [InlineData("((_,1,_),(_,_,_),(_,_,_))", "{(0,0),(1,1),(2,2)}")]
+    public void AKARI_Verifier_RejectsInvalidCertificate(string instance, string certificate) {
+        AKARI problem = new AKARI(instance);
+        AkariVerifier verifier = new AkariVerifier();
+        Assert.False(verifier.verify(problem, certificate));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("{")]
+    [InlineData("invalid")]
+    [InlineData("{(1,3}")]
+    [InlineData("{(1,3),(2,3)}trailing")]
+    public async Task AKARI_Verifier_ThrowsOnMalformedCertificate(string certificate) {
+        AKARI problem = new AKARI("((_,_,_),(_,_,_),(_,_,_))");
+        AkariVerifier verifier = new AkariVerifier();
+        Assert.Throws<CertificateParseException>(() => verifier.verify(problem, certificate));
     }
 
     #endregion

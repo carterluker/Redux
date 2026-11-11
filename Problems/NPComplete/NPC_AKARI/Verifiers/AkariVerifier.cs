@@ -10,7 +10,7 @@ class AkariVerifier : IVerifier<AKARI> {
     public const string CertificateExample = "{(0,1),(2,4),(3,1)}";
 
     // --- Fields ---
-    public string verifierName { get; } = "Akari (Light-Up) Puzzle Solution Verifier";
+    public string verifierName { get; } = "Akari (Light Up Puzzle) Solution Verifier";
     public string verifierDefinition { get; } = "This is a polynomial time verifier for the Akari (Light-Up) Puzzle.";
     public string source { get; } = " ";
     public string sourceLink { get; } = "TODO";
@@ -37,23 +37,20 @@ class AkariVerifier : IVerifier<AKARI> {
     }
 
     public bool verify(AKARI problem, string certificate) {
+        List<(int x, int y)> lights;
 
         int[][] problemGrid = (int[][])problem.grid.Clone();
-        try {
-            var lights = ParseCertificate(certificate);
-        } catch {
-            return false;
+        lights = ParseCertificate(problem, certificate);
+
+        foreach (var light in lights) {
+            if (!CheckLight(problemGrid, light.x, light.y)) { return false; }
         }
 
-        foreach(var light in lights) {
-            if (!CheckLight(problemGrid, light.x, light.y)) {return false;}
-        }
-
-        for(int y = 0; y < problemGrid.Length; y++) {
-            for(int x = 0; x < problemGrid[0].Length; x++) {
-                if (problemGrid[y][x] == EMPTY_CELL) {return false;}
+        for (int y = 0; y < problemGrid.Length; y++) {
+            for (int x = 0; x < problemGrid[0].Length; x++) {
+                if (problemGrid[y][x] == EMPTY_CELL) { return false; }
                 if (problemGrid[y][x] >= 0) {
-                    if (!CheckHint(problemGrid, x, y)) {return false;}
+                    if (!CheckHint(problemGrid, x, y)) { return false; }
                 }
             }
         }
@@ -61,11 +58,11 @@ class AkariVerifier : IVerifier<AKARI> {
         return true;
     }
 
-    private static List<(int x, int y)> ParseCertificate(int[][] grid, string certificate) {
+    private static List<(int x, int y)> ParseCertificate(AKARI problem, string certificate) {
         if (string.IsNullOrWhiteSpace(certificate)) {
-               throw new CertificateParseException(problem, certificate, "certificate is empty");
-           }
-        
+            throw new CertificateParseException(problem, certificate, "certificate is empty");
+        }
+
         // The certificate is scanned as written (whitespace skipped between tokens) so that
         // reported positions match what the caller sees, including multi-line instances.
         int pos = 0;
@@ -94,13 +91,12 @@ class AkariVerifier : IVerifier<AKARI> {
         int GetNumber() {
             var numberBuilder = new StringBuilder();
             SkipWhitespace();
-            while(Char.IsDigit(certificate, pos))
-            {
+            while (Char.IsDigit(certificate, pos)) {
                 numberBuilder.Append(certificate[pos]);
                 pos++;
             }
             string numberString = numberBuilder.ToString();
-            if (numberString.Length == 0) {throw new CertificateParseException(problem, certificate, "No number provided");}
+            if (numberString.Length == 0) { throw new CertificateParseException(problem, certificate, "No number provided"); }
             return Int32.Parse(numberString);
         }
 
@@ -112,8 +108,8 @@ class AkariVerifier : IVerifier<AKARI> {
             Expect(',');
             y = GetNumber();
             Expect(')');
-            lights.Add((x,y));
-            if(TryConsume(',')) { continue; }
+            lights.Add((x, y));
+            if (TryConsume(',')) { continue; }
             break;
         }
         Expect('}');
@@ -125,7 +121,7 @@ class AkariVerifier : IVerifier<AKARI> {
     }
 
     private static bool CheckLight(int[][] grid, int x, int y) {
-        if (grid[y][x] != EMPTY_CELL) {return false;}
+        if (grid[y][x] != EMPTY_CELL) { return false; }
 
         grid[y][x] = LIGHT;
 
@@ -142,7 +138,7 @@ class AkariVerifier : IVerifier<AKARI> {
         y += deltaY;
 
         while (x >= 0 && x < grid[0].Length && y >= 0 && y < grid.Length) {
-            if (grid[y][x] != EMPTY_CELL && grid[y][x] != LIT_CELL) {return;}
+            if (grid[y][x] != EMPTY_CELL && grid[y][x] != LIT_CELL) { return; }
 
             grid[y][x] = LIT_CELL;
 
@@ -155,10 +151,10 @@ class AkariVerifier : IVerifier<AKARI> {
         int value = grid[y][x];
         int count = 0;
 
-        if (x > 0) {count += grid[y][x - 1] == LIGHT ? 1 : 0;}
-        if (x < grid[0].Length - 1) {count += grid[y][x + 1] == LIGHT ? 1 : 0;}
-        if (y > 0) {count += grid[y - 1][x] == LIGHT ? 1 : 0;}
-        if (y < grid.Length - 1) {count += grid[y + 1][x] == LIGHT ? 1 : 0;}
+        if (x > 0) { count += grid[y][x - 1] == LIGHT ? 1 : 0; }
+        if (x < grid[0].Length - 1) { count += grid[y][x + 1] == LIGHT ? 1 : 0; }
+        if (y > 0) { count += grid[y - 1][x] == LIGHT ? 1 : 0; }
+        if (y < grid.Length - 1) { count += grid[y + 1][x] == LIGHT ? 1 : 0; }
 
         return count == value;
     }
