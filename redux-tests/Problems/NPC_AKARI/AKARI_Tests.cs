@@ -271,15 +271,28 @@ public class AKARI_Tests {
     [InlineData("((_,3,_),(_,_,_),(_,_,_))", "{(0,0),(2,0),(1,1)}")]
     [InlineData("((_,_,_),(_,4,_),(_,_,_))", "{(1,0),(0,1),(2,1),(1,2)}")]
     [InlineData("((#,_,#),(1,_,1),(#,_,#))", "{(1,1)}")]
+    [InlineData("((_,_,#,_),(_,_,_,_),(_,_,_,_))", "{(0,0),(3,0),(1,1),(2,2)}")]
     public void AKARI_Verifier_AcceptsValidCertificate(string instance, string certificate) {
         AKARI problem = new AKARI(instance);
         AkariVerifier verifier = new AkariVerifier();
         Assert.True(verifier.verify(problem, certificate));
     }
 
+    [Fact]
+    public void AKARI_Verifier_VerifyTwiceCausesNoIssues() {
+        string certificate = "{(0,0),(1,1),(2,2)}";
+        AKARI problem = new AKARI("((_,_,_),(_,_,_),(_,_,_))");
+        AkariVerifier verifier = new AkariVerifier();
+        bool run1 = verifier.verify(problem, certificate);
+        bool run2 = verifier.verify(problem, certificate);
+        Assert.True(run1 && run2);
+    }
+
     [Theory]
-    [InlineData("((_,_,_),(_,_,_),(_,_,_))", "{(0,0)}")]
+    [InlineData("((_,_,_),(_,_,_),(_,_,_))", "{}")]
     [InlineData("((_,_,_),(_,_,_),(_,_,_))", "{(0,0),(1,1),(2,2),(0,2)}")]
+    [InlineData("((_,_,_),(_,_,_),(_,_,_))", "{(0,0),(1,1),(2,2),(1,1)}")]
+    [InlineData("((_,_,_),(_,#,_),(_,_,_))", "{(0,0),(1,1),(2,2)}")]
     [InlineData("((_,0,_),(_,_,_),(_,_,_))", "{(0,0),(1,1),(2,2)}")]
     [InlineData("((_,1,_),(_,_,_),(_,_,_))", "{(0,0),(1,1),(2,2)}")]
     public void AKARI_Verifier_RejectsInvalidCertificate(string instance, string certificate) {
@@ -292,9 +305,10 @@ public class AKARI_Tests {
     [InlineData("")]
     [InlineData("{")]
     [InlineData("invalid")]
-    [InlineData("{(1,3}")]
-    [InlineData("{(1,3),(2,3)}trailing")]
-    public async Task AKARI_Verifier_ThrowsOnMalformedCertificate(string certificate) {
+    [InlineData("{(3,3)}")]
+    [InlineData("{(1,2}")]
+    [InlineData("{(1,2),(2,2)}trailing")]
+    public void AKARI_Verifier_ThrowsOnMalformedCertificate(string certificate) {
         AKARI problem = new AKARI("((_,_,_),(_,_,_),(_,_,_))");
         AkariVerifier verifier = new AkariVerifier();
         Assert.Throws<CertificateParseException>(() => verifier.verify(problem, certificate));

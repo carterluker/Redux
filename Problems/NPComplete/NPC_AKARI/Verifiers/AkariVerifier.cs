@@ -22,8 +22,6 @@ class AkariVerifier : IVerifier<AKARI> {
 
     public const int LIT_CELL = -4;
     public const int LIGHT = -3;
-    public const int EMPTY_CELL = -2;
-    public const int WALL = -1;
 
     public string certificate {
         get {
@@ -39,8 +37,8 @@ class AkariVerifier : IVerifier<AKARI> {
     public bool verify(AKARI problem, string certificate) {
         List<(int x, int y)> lights;
 
-        int[][] problemGrid = (int[][])problem.grid.Clone();
-        lights = ParseCertificate(problem, certificate);
+        int[][] problemGrid = problem.grid.Select(row => (int[])row.Clone()).ToArray();
+        lights = ParseCertificate(problem, (problemGrid[0].Length, problemGrid.Length), certificate);
 
         foreach (var light in lights) {
             if (!CheckLight(problemGrid, light.x, light.y)) { return false; }
@@ -48,7 +46,7 @@ class AkariVerifier : IVerifier<AKARI> {
 
         for (int y = 0; y < problemGrid.Length; y++) {
             for (int x = 0; x < problemGrid[0].Length; x++) {
-                if (problemGrid[y][x] == EMPTY_CELL) { return false; }
+                if (problemGrid[y][x] == AKARI.EMPTY_CELL) { return false; }
                 if (problemGrid[y][x] >= 0) {
                     if (!CheckHint(problemGrid, x, y)) { return false; }
                 }
@@ -58,7 +56,7 @@ class AkariVerifier : IVerifier<AKARI> {
         return true;
     }
 
-    private static List<(int x, int y)> ParseCertificate(AKARI problem, string certificate) {
+    private static List<(int x, int y)> ParseCertificate(AKARI problem, (int x, int y) gridSize, string certificate) {
         if (string.IsNullOrWhiteSpace(certificate)) {
             throw new CertificateParseException(problem, certificate, "certificate is empty");
         }
@@ -91,23 +89,26 @@ class AkariVerifier : IVerifier<AKARI> {
         int GetNumber() {
             var numberBuilder = new StringBuilder();
             SkipWhitespace();
-            while (Char.IsDigit(certificate, pos)) {
+            while (pos < certificate.Length && Char.IsAsciiDigit(certificate[pos])) {
                 numberBuilder.Append(certificate[pos]);
                 pos++;
             }
             string numberString = numberBuilder.ToString();
             if (numberString.Length == 0) { throw new CertificateParseException(problem, certificate, "No number provided"); }
-            return Int32.Parse(numberString);
+            int outputNumber;
+            if (!Int32.TryParse(numberString, out outputNumber)) { throw new CertificateParseException(problem, certificate, "Invalid number provided"); }
+            return outputNumber;
         }
 
         var lights = new List<(int x, int y)>();
         Expect('{');
-        while (true) {
+        while (pos < certificate.Length && certificate[pos] != '}') {
             Expect('(');
             x = GetNumber();
             Expect(',');
             y = GetNumber();
             Expect(')');
+            if (x >= gridSize.x || y >= gridSize.y) { throw new CertificateParseException(problem, certificate, $"provided coordnate ({x},{y}) falls outside problem grid bounds"); }
             lights.Add((x, y));
             if (TryConsume(',')) { continue; }
             break;
@@ -121,7 +122,7 @@ class AkariVerifier : IVerifier<AKARI> {
     }
 
     private static bool CheckLight(int[][] grid, int x, int y) {
-        if (grid[y][x] != EMPTY_CELL) { return false; }
+        if (grid[y][x] != AKARI.EMPTY_CELL) { return false; }
 
         grid[y][x] = LIGHT;
 
@@ -138,7 +139,7 @@ class AkariVerifier : IVerifier<AKARI> {
         y += deltaY;
 
         while (x >= 0 && x < grid[0].Length && y >= 0 && y < grid.Length) {
-            if (grid[y][x] != EMPTY_CELL && grid[y][x] != LIT_CELL) { return; }
+            if (grid[y][x] != AKARI.EMPTY_CELL && grid[y][x] != LIT_CELL) { return; }
 
             grid[y][x] = LIT_CELL;
 
