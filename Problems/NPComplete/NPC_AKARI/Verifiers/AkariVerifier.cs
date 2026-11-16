@@ -7,7 +7,7 @@ namespace API.Problems.NPComplete.NPC_AKARI.Verifiers;
 
 class AkariVerifier : IVerifier<AKARI> {
     public const string CertificateGrammar = "{{(x,y)} | x,y are integer coordinates of lights}";
-    public const string CertificateExample = "{(0,1),(2,4),(3,1)}";
+    public const string CertificateExample = "{(1,0),(6,0),(0,1),(4,1),(3,2),(5,2),(2,3),(4,3),(1,4),(3,5),(6,5),(0,6),(5,6)}";
 
     // --- Fields ---
     public string verifierName { get; } = "Akari (Light Up Puzzle) Solution Verifier";
